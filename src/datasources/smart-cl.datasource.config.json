@@ -1,0 +1,10 @@
+{
+  "name": "smart_cl",
+  "connector": "mssql",
+  "url": "",
+  "host": "186.10.95.249",
+  "port": 1433,
+  "user": "sa",
+  "password": "Kaltire.2019",
+  "database": "smart_cl"
+}
