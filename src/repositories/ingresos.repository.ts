@@ -12,5 +12,6 @@ export class IngresosRepository extends DefaultCrudRepository<
     @inject('datasources.smart_cl') dataSource: SmartClDataSource,
   ) {
     super(Ingresos, dataSource);
+
   }
 }

@@ -4,7 +4,7 @@ import {Entity, model, property} from '@loopback/repository';
 export class Clientes extends Entity {
   @property({
     type: 'number',
-    required: true,
+    required: false,
     precision: 10,
     scale: 0,
     id: 1,

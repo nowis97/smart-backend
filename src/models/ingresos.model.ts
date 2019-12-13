@@ -4,7 +4,7 @@ import {Entity, model, property} from '@loopback/repository';
 export class Ingresos extends Entity {
   @property({
     type: 'number',
-    required: true,
+    required: false,
     precision: 19,
     scale: 0,
     id: 1,
@@ -35,7 +35,7 @@ export class Ingresos extends Entity {
     scale: 0,
     mssql: {columnName: 'guia_kt', dataType: 'tinyint', dataLength: null, dataPrecision: 3, dataScale: 0, nullable: 'NO'},
   })
-  guiaKt: number;
+  guiaKt: boolean;
 
   @property({
     type: 'string',
@@ -45,12 +45,11 @@ export class Ingresos extends Entity {
   comentario?: string;
 
   @property({
-    type: 'number',
-    precision: 10,
-    scale: 0,
-    mssql: {columnName: 'ruta_foto', dataType: 'int', dataLength: null, dataPrecision: 10, dataScale: 0, nullable: 'YES'},
+    type: 'string',
+    length: 255,
+    mssql: {columnName: 'ruta_foto', dataType: 'varchar', dataLength: 255, dataPrecision: null, dataScale: null, nullable: 'YES'},
   })
-  rutaFoto?: number;
+  rutaFoto?: string;
 
   @property({
     type: 'number',

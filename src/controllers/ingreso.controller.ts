@@ -17,13 +17,15 @@ import {
   del,
   requestBody,
 } from '@loopback/rest';
-import {Ingresos} from '../models';
-import {IngresosRepository} from '../repositories';
+import {Ingresos, Neumaticos} from '../models';
+import {IngresosRepository, NeumaticosRepository} from '../repositories';
 
 export class IngresoController {
   constructor(
     @repository(IngresosRepository)
     public ingresosRepository : IngresosRepository,
+    @repository(NeumaticosRepository)
+    public neumaticosRepository: NeumaticosRepository
   ) {}
 
   @post('/ingresos', {
@@ -47,7 +49,14 @@ export class IngresoController {
     })
     ingresos: Omit<Ingresos, 'id'>,
   ): Promise<Ingresos> {
-    return this.ingresosRepository.create(ingresos);
+      if(!await this.neumaticosRepository.exists(ingresos.neumaticosserie))
+            await this.neumaticosRepository.create(new Neumaticos(
+              {serie: ingresos.neumaticosserie, estadoActual: 'INGRESADO'}
+            ));
+
+      return this.ingresosRepository.create(ingresos);
+
+
   }
 
   @get('/ingresos/count', {
@@ -62,6 +71,7 @@ export class IngresoController {
     @param.query.object('where', getWhereSchemaFor(Ingresos)) where?: Where<Ingresos>,
   ): Promise<Count> {
     return this.ingresosRepository.count(where);
+
   }
 
   @get('/ingresos', {
@@ -82,8 +92,30 @@ export class IngresoController {
   async find(
     @param.query.object('filter', getFilterSchemaFor(Ingresos)) filter?: Filter<Ingresos>,
   ): Promise<Ingresos[]> {
+   //return this.ingresosRepository.execute('select ingresos.id,faena,guia_despacho,patente_camion,guia_kt,fecha,comentario from ingresos,clientes where ingresos.clientesid = clientes.id',[])
     return this.ingresosRepository.find(filter);
   }
+
+  @get('/ingresados', {
+    responses: {
+      '200': {
+        description: 'objetos of Ingresos model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+            },
+          },
+        },
+      },
+    },
+  })async todosIngresados():Promise<object>{
+    return this
+      .ingresosRepository
+      .execute('select neumaticosserie,faena,guia_despacho,patente_camion,guia_kt,fecha,comentario,ruta_foto from ingresos,clientes where ingresos.clientesid = clientes.id', [])
+
+  }
+
 
   @patch('/ingresos', {
     responses: {

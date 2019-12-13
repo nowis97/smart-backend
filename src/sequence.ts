@@ -9,6 +9,7 @@ import {
   Send,
   SequenceHandler,
 } from '@loopback/rest';
+
 import {AuthenticateFn, AuthenticationBindings} from '@loopback/authentication';
 
 const SequenceActions = RestBindings.SequenceActions;
@@ -33,7 +34,12 @@ export class MySequence implements SequenceHandler {
       const result = await this.invoke(route, args);
       this.send(response, result);
     } catch (err) {
-      this.reject(context, err);
+      console.log(err);
+      const {code,name,message} = err;
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      this.reject(context, {code,name,message});
     }
   }
 }

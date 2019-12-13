@@ -24,6 +24,7 @@ export class ClientesController {
   constructor(
     @repository(ClientesRepository)
     public clientesRepository : ClientesRepository,
+
   ) {}
 
   @post('/clientes', {

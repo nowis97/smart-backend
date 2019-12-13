@@ -1,17 +1,13 @@
 // Uncomment these imports to begin using these cool features!
 
-// import {inject} from '@loopback/context';
 
 
 
-import {post, requestBody, RestBindings} from "@loopback/rest";
-import {inject} from "@loopback/context";
-
+import { post, requestBody} from '@loopback/rest';
 export class UploadImagesController {
     constructor() {
-        console.debug('constructor de UploadImageController');
   }
-@post('/show-body', {
+@post('/upload-image', {
   responses: {
     200: {
       content: {
@@ -22,7 +18,7 @@ export class UploadImagesController {
     },
   },
 })
-async showBody(
+async uploadImage(
     @requestBody({
       description: 'multipart/form-data value.',
       required: true,
@@ -36,4 +32,6 @@ async showBody(
 ) {
       return body;
 }
+
+
 }

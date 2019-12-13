@@ -97,9 +97,9 @@ export class Catalogo extends Entity {
     type: 'string',
     required: true,
     length: 127,
-    mssql: {columnName: 'description', dataType: 'varchar', dataLength: 127, dataPrecision: null, dataScale: null, nullable: 'NO'},
+    mssql: {columnName: 'size', dataType: 'varchar', dataLength: 127, dataPrecision: null, dataScale: null, nullable: 'NO'},
   })
-  description: string;
+  size: string;
 
   // Define well-known properties here
 

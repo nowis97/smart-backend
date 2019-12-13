@@ -5,7 +5,7 @@ import {
   RestExplorerComponent,
 } from '@loopback/rest-explorer';
 import {RepositoryMixin} from '@loopback/repository';
-import {RestApplication} from '@loopback/rest';
+import {RestApplication, RestBindings} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import * as path from 'path';
 import {MySequence} from './sequence';
@@ -29,13 +29,13 @@ export class Smart extends BootMixin(
 
     // Set up default home page
     this.static('/', path.join(__dirname, '../public'));
-
+    this.static('/images',path.join(__dirname,'../uploads'));
     // Customize @loopback/rest-explorer configuration here
     this.bind(RestExplorerBindings.CONFIG).to({
       path: '/explorer',
     });
     this.component(RestExplorerComponent);
-
+    this.bind(RestBindings.ERROR_WRITER_OPTIONS).to({debug: true});
     this.bind(AuthenticationBindings.METADATA).toProvider(MyAuthMetadataProvider);
     this.bind(MyAuthBindings.STRATEGY).toProvider(MyAuthAuthenticationStrategyProvider);
     this.bind(AuthenticationBindings.AUTH_ACTION).toProvider(MyAuthActionProvider);
