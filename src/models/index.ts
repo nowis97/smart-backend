@@ -18,3 +18,4 @@ export * from './tipo-renovado.model';
 export * from './trabajos.model';
 export * from './users.model';
 export * from './users-roles.model';
+export * from './codigos-bajas.model';

@@ -18,3 +18,4 @@ export * from './tipo-renovado.repository';
 export * from './trabajos.repository';
 export * from './users-roles.repository';
 export * from './users.repository';
+export * from './codigos-bajas.repository';

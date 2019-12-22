@@ -112,8 +112,7 @@ export class IngresoController {
   })async todosIngresados():Promise<object>{
     return this
       .ingresosRepository
-      .execute('select neumaticosserie,faena,guia_despacho,patente_camion,guia_kt,fecha,comentario,ruta_foto from ingresos,clientes where ingresos.clientesid = clientes.id', [])
-
+      .execute('select ingresos.id,neumaticosserie,faena,guia_despacho,patente_camion,guia_kt,fecha,comentario,ruta_foto from ingresos,clientes,neumaticos where ingresos.clientesid = clientes.id and ingresos.neumaticosserie = neumaticos.serie and neumaticos.estado_actual = \'INGRESADO\'', [])
   }
 
 

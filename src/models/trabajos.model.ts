@@ -47,11 +47,10 @@ export class Trabajos extends Entity {
 
   @property({
     type: 'string',
-    required: true,
-    length: 127,
-    mssql: {columnName: 'codigo_baja', dataType: 'varchar', dataLength: 127, dataPrecision: null, dataScale: null, nullable: 'NO'},
+    length: 50,
+    mssql: {columnName: 'codigos_bajascode', dataType: 'nvarchar', dataLength: 50, dataPrecision: null, dataScale: null, nullable: 'YES'},
   })
-  codigoBaja: string;
+  codigosBajascode?: string;
 
   // Define well-known properties here
 
