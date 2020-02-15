@@ -1,24 +1,19 @@
+import {Count, CountSchema, Filter, repository, Where} from '@loopback/repository';
 import {
-  Count,
-  CountSchema,
-  Filter,
-  repository,
-  Where,
-} from '@loopback/repository';
-import {
-  post,
-  param,
+  del,
   get,
   getFilterSchemaFor,
   getModelSchemaRef,
   getWhereSchemaFor,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
 } from '@loopback/rest';
 import {Clientes} from '../models';
 import {ClientesRepository} from '../repositories';
+import {secured, SecuredType} from '../auth';
 
 export class ClientesController {
   constructor(
@@ -26,7 +21,7 @@ export class ClientesController {
     public clientesRepository : ClientesRepository,
 
   ) {}
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','clientes'])
   @post('/clientes', {
     responses: {
       '200': {
@@ -50,7 +45,7 @@ export class ClientesController {
   ): Promise<Clientes> {
     return this.clientesRepository.create(clientes);
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','clientes'])
   @get('/clientes/count', {
     responses: {
       '200': {
@@ -64,7 +59,7 @@ export class ClientesController {
   ): Promise<Count> {
     return this.clientesRepository.count(where);
   }
-
+  @secured(SecuredType.IS_AUTHENTICATED)
   @get('/clientes', {
     responses: {
       '200': {
@@ -86,6 +81,7 @@ export class ClientesController {
     return this.clientesRepository.find(filter);
   }
 
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','clientes'])
   @patch('/clientes', {
     responses: {
       '200': {
@@ -107,7 +103,7 @@ export class ClientesController {
   ): Promise<Count> {
     return this.clientesRepository.updateAll(clientes, where);
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','clientes'])
   @get('/clientes/{id}', {
     responses: {
       '200': {
@@ -127,6 +123,7 @@ export class ClientesController {
     return this.clientesRepository.findById(id, filter);
   }
 
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','clientes'])
   @patch('/clientes/{id}', {
     responses: {
       '204': {
@@ -148,6 +145,7 @@ export class ClientesController {
     await this.clientesRepository.updateById(id, clientes);
   }
 
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','clientes'])
   @put('/clientes/{id}', {
     responses: {
       '204': {
@@ -162,6 +160,7 @@ export class ClientesController {
     await this.clientesRepository.replaceById(id, clientes);
   }
 
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','clientes'])
   @del('/clientes/{id}', {
     responses: {
       '204': {

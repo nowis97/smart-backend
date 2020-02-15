@@ -1,24 +1,20 @@
+import {Count, CountSchema, Filter, repository, Where} from '@loopback/repository';
 import {
-  Count,
-  CountSchema,
-  Filter,
-  repository,
-  Where,
-} from '@loopback/repository';
-import {
-  post,
-  param,
+  del,
   get,
   getFilterSchemaFor,
   getModelSchemaRef,
   getWhereSchemaFor,
+  HttpErrors,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
 } from '@loopback/rest';
 import {Ingresos, Neumaticos} from '../models';
 import {IngresosRepository, NeumaticosRepository} from '../repositories';
+import {secured, SecuredType} from '../auth';
 
 export class IngresoController {
   constructor(
@@ -28,6 +24,7 @@ export class IngresoController {
     public neumaticosRepository: NeumaticosRepository
   ) {}
 
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','ingreso'])
   @post('/ingresos', {
     responses: {
       '200': {
@@ -49,16 +46,31 @@ export class IngresoController {
     })
     ingresos: Omit<Ingresos, 'id'>,
   ): Promise<Ingresos> {
-      if(!await this.neumaticosRepository.exists(ingresos.neumaticosserie))
-            await this.neumaticosRepository.create(new Neumaticos(
-              {serie: ingresos.neumaticosserie, estadoActual: 'INGRESADO'}
-            ));
+    let neumaticoExiste;
+    try {
+      neumaticoExiste = await this.neumaticosRepository.findById(ingresos.neumaticosserie);
+      // eslint-disable-next-line no-empty
+    }catch (e) {}
 
-      return this.ingresosRepository.create(ingresos);
+    if (!neumaticoExiste){
+      await this.neumaticosRepository.create(new Neumaticos(
+      {serie: ingresos.neumaticosserie, estadoActual: 'INGRESADO'}
+
+    ));
+
+    }else {
+      if (neumaticoExiste.estadoActual !== 'FACTURADO' && neumaticoExiste.estadoActual === 'INGRESADO')
+        throw new HttpErrors.Conflict('El neumatico ya esta en el proceso')
+    }
+    return this.ingresosRepository.create(ingresos);
+
+
+
+
 
 
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','ingreso'])
   @get('/ingresos/count', {
     responses: {
       '200': {
@@ -73,7 +85,7 @@ export class IngresoController {
     return this.ingresosRepository.count(where);
 
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','ingreso'])
   @get('/ingresos', {
     responses: {
       '200': {
@@ -95,7 +107,7 @@ export class IngresoController {
    //return this.ingresosRepository.execute('select ingresos.id,faena,guia_despacho,patente_camion,guia_kt,fecha,comentario from ingresos,clientes where ingresos.clientesid = clientes.id',[])
     return this.ingresosRepository.find(filter);
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion'])
   @get('/ingresados', {
     responses: {
       '200': {
@@ -115,7 +127,7 @@ export class IngresoController {
       .execute('select ingresos.id,neumaticosserie,faena,guia_despacho,patente_camion,guia_kt,fecha,comentario,ruta_foto from ingresos,clientes,neumaticos where ingresos.clientesid = clientes.id and ingresos.neumaticosserie = neumaticos.serie and neumaticos.estado_actual = \'INGRESADO\'', [])
   }
 
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','ingreso'])
   @patch('/ingresos', {
     responses: {
       '200': {
@@ -137,7 +149,7 @@ export class IngresoController {
   ): Promise<Count> {
     return this.ingresosRepository.updateAll(ingresos, where);
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','ingreso'])
   @get('/ingresos/{id}', {
     responses: {
       '200': {
@@ -156,7 +168,7 @@ export class IngresoController {
   ): Promise<Ingresos> {
     return this.ingresosRepository.findById(id, filter);
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','ingreso'])
   @patch('/ingresos/{id}', {
     responses: {
       '204': {
@@ -178,6 +190,7 @@ export class IngresoController {
     await this.ingresosRepository.updateById(id, ingresos);
   }
 
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','ingreso'])
   @put('/ingresos/{id}', {
     responses: {
       '204': {
@@ -191,7 +204,7 @@ export class IngresoController {
   ): Promise<void> {
     await this.ingresosRepository.replaceById(id, ingresos);
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','ingreso'])
   @del('/ingresos/{id}', {
     responses: {
       '204': {

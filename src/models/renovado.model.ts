@@ -3,13 +3,12 @@ import {Entity, model, property} from '@loopback/repository';
 @model({settings: {idInjection: false, mssql: {schema: 'dbo', table: 'renovado'}}})
 export class Renovado extends Entity {
   @property({
-    type: 'number',
+    type: 'string',
     required: true,
-    precision: 10,
-    scale: 0,
-    mssql: {columnName: 'codigo_caucho_base', dataType: 'int', dataLength: null, dataPrecision: 10, dataScale: 0, nullable: 'NO'},
+    length: 127,
+    mssql: {columnName: 'codigo_caucho_base', dataType: 'varchar', dataLength: 127, dataPrecision: null, dataScale: null, nullable: 'NO'},
   })
-  codigoCauchoBase: number;
+  codigoCauchoBase: string;
 
   @property({
     type: 'number',
@@ -40,7 +39,7 @@ export class Renovado extends Entity {
 
   @property({
     type: 'number',
-    required: true,
+    required: false,
     precision: 19,
     scale: 0,
     id: 1,
@@ -58,21 +57,19 @@ export class Renovado extends Entity {
   tipoRenovadoid: number;
 
   @property({
-    type: 'number',
+    type: 'string',
     required: true,
-    precision: 10,
-    scale: 0,
-    mssql: {columnName: 'codigo_caucho_banda', dataType: 'int', dataLength: null, dataPrecision: 10, dataScale: 0, nullable: 'NO'},
+    length: 127,
+    mssql: {columnName: 'codigo_caucho_banda', dataType: 'varchar', dataLength: 127, dataPrecision: null, dataScale: null, nullable: 'NO'},
   })
-  codigoCauchoBanda: number;
+  codigoCauchoBanda: string;
 
   @property({
-    type: 'number',
-    precision: 10,
-    scale: 0,
-    mssql: {columnName: 'codigo_caucho_banda_2', dataType: 'int', dataLength: null, dataPrecision: 10, dataScale: 0, nullable: 'YES'},
+    type: 'string',
+    length: 127,
+    mssql: {columnName: 'codigo_caucho_banda_2', dataType: 'varchar', dataLength: 127, dataPrecision: null, dataScale: null, nullable: 'YES'},
   })
-  codigoCauchoBanda2?: number;
+  codigoCauchoBanda2?: string;
 
   // Define well-known properties here
 

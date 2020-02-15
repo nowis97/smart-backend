@@ -19,3 +19,8 @@ export * from './trabajos.model';
 export * from './users.model';
 export * from './users-roles.model';
 export * from './codigos-bajas.model';
+export * from './despachos.model';
+export * from './facturas.model';
+export * from './performance.model';
+export * from './maple.model';
+export * from './tire.model';

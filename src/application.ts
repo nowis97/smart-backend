@@ -26,7 +26,6 @@ export class Smart extends BootMixin(
 
     // Set up the custom sequence
     this.sequence(MySequence);
-
     // Set up default home page
     this.static('/', path.join(__dirname, '../public'));
     this.static('/images',path.join(__dirname,'../uploads'));
@@ -49,6 +48,7 @@ export class Smart extends BootMixin(
         extensions: ['.controller.js'],
         nested: true,
       },
+
     };
   }
 }

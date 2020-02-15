@@ -67,6 +67,14 @@ export class Clientes extends Entity {
   })
   regionesid: number;
 
+  @property({
+    type: 'string',
+    required: true,
+    length: 127,
+    mssql: {columnName: 'rut', dataType: 'varchar', dataLength: 127, dataPrecision: null, dataScale: null, nullable: 'NO'},
+  })
+  rut: string;
+
   // Define well-known properties here
 
   // Indexer property to allow additional data

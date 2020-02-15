@@ -16,11 +16,13 @@ import {
   put,
   del,
   requestBody,
+  HttpErrors
 } from '@loopback/rest';
 import {Recepciones} from '../models';
-import {RecepcionesRepository} from '../repositories';
+import {RecepcionesRepository, TireRepository} from '../repositories';
 import {NeumaticosRepository} from '../repositories';
 import {IngresosRepository} from '../repositories';
+import {secured, SecuredType} from '../auth';
 
 export class RecepcionesController {
   constructor(
@@ -30,8 +32,10 @@ export class RecepcionesController {
     public neumaticosRepository:NeumaticosRepository,
     @repository(IngresosRepository)
     public ingresosRepository : IngresosRepository,
+    @repository(TireRepository)
+    public tireRepository : TireRepository
   ) {}
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion'])
   @post('/recepciones', {
     responses: {
       '200': {
@@ -53,14 +57,18 @@ export class RecepcionesController {
     })
     recepciones: Omit<Recepciones, 'id'>,
   ): Promise<Recepciones> {
+    const ingreso = await this.ingresosRepository.findById(recepciones.ingresosid);
+
+    if ((new Date(recepciones.fecha)).getTime() <= (new Date(ingreso.fecha)).getTime() )
+      throw new HttpErrors.BadRequest('Las fecha de recepcion debe ser mayor que la fecha de ingreso');
+
 
     const resp =await this.recepcionesRepository.create(recepciones);
-    const ingreso = await this.ingresosRepository.findById(recepciones.ingresosid);
     await this.neumaticosRepository.updateById(ingreso.neumaticosserie,{estadoActual:'RECEPCIONADO'});
     return resp
 
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion'])
   @get('/recepciones/count', {
     responses: {
       '200': {
@@ -74,7 +82,24 @@ export class RecepcionesController {
   ): Promise<Count> {
     return this.recepcionesRepository.count(where);
   }
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion'])
+  @get('/recepcionados/toms/{serie}',{
+    responses:{
+      200:{
+        description: 'object of neumatico in TOMS ',
+        content:{
+          'application/json':{
+          }
+        }
+      },
+    }
+  })async getNeumaticoToms(@param.path.string('serie') serie:string){
+    return this.tireRepository.find({where:{casingSerialNo:serie}});
 
+  }
+
+
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion','planta'])
   @get('/recepcionados',{
     responses:{
       200:{
@@ -88,7 +113,7 @@ export class RecepcionesController {
       },
     }
   })async getRecepcionados(){
-    return this.recepcionesRepository.execute('select clientes.faena, neumaticos.serie, ingresos.guia_despacho,\n' +
+    return this.recepcionesRepository.execute('select recepciones.id,clientes.faena, neumaticos.serie, ingresos.guia_despacho,\n' +
       '       kms_operacion,hrs_operacion,rtd,recepciones.fecha,causa_recepcion.nombre, ingresos.ruta_foto\n' +
       '       from recepciones,ingresos,causa_recepcion,clientes, neumaticos where\n' +
       '        recepciones.causa_recepcionid = causa_recepcion.id\n' +
@@ -98,11 +123,7 @@ export class RecepcionesController {
       '        AND neumaticos.estado_actual = \'RECEPCIONADO\'\n',[])
   }
 
-  @get('/test')
-  async test(){
-    const p = 3;
-    return this.recepcionesRepository.execute('select * from recepciones where id = (?)',[p])
-  }
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion'])
   @get('/recepciones', {
     responses: {
       '200': {
@@ -123,7 +144,7 @@ export class RecepcionesController {
   ): Promise<Recepciones[]> {
     return this.recepcionesRepository.find(filter);
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion'])
   @patch('/recepciones', {
     responses: {
       '200': {
@@ -145,7 +166,7 @@ export class RecepcionesController {
   ): Promise<Count> {
     return this.recepcionesRepository.updateAll(recepciones, where);
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion'])
   @get('/recepciones/{id}', {
     responses: {
       '200': {
@@ -165,6 +186,7 @@ export class RecepcionesController {
     return this.recepcionesRepository.findById(id, filter);
   }
 
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion'])
   @patch('/recepciones/{id}', {
     responses: {
       '204': {
@@ -185,7 +207,7 @@ export class RecepcionesController {
   ): Promise<void> {
     await this.recepcionesRepository.updateById(id, recepciones);
   }
-
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion'])
   @put('/recepciones/{id}', {
     responses: {
       '204': {
@@ -200,6 +222,7 @@ export class RecepcionesController {
     await this.recepcionesRepository.replaceById(id, recepciones);
   }
 
+  @secured(SecuredType.HAS_ANY_ROLE,['superuser','recepcion'])
   @del('/recepciones/{id}', {
     responses: {
       '204': {

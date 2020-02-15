@@ -22,7 +22,7 @@ export class MultipartFormDataBodyParser implements BodyParser{
         const upload = multer({ storage: this.storage });
         return new Promise<RequestBody>((resolve, reject) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            upload.single('image')(request,{} as any,(err: any) => {
+            upload.single('file')(request,{} as any,(err: any) => {
                 if (err) reject(err);
                 else{
                     resolve({

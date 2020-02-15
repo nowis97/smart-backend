@@ -1,17 +1,16 @@
 import {DefaultCrudRepository} from '@loopback/repository';
-import { UsersRoles, UsersRolesRelations} from '../models';
+import {Facturas, FacturasRelations} from '../models';
 import {SmartClDataSource} from '../datasources';
 import {inject} from '@loopback/core';
 
-export class UsersRolesRepository extends DefaultCrudRepository<
-  UsersRoles,
-  typeof UsersRoles.prototype.usersid,
-  UsersRolesRelations
+export class FacturasRepository extends DefaultCrudRepository<
+  Facturas,
+  typeof Facturas.prototype.numeroFactura,
+  FacturasRelations
 > {
   constructor(
     @inject('datasources.smart_cl') dataSource: SmartClDataSource,
   ) {
-    super(UsersRoles, dataSource);
+    super(Facturas, dataSource);
   }
-
 }

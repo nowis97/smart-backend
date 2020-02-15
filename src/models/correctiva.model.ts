@@ -40,7 +40,7 @@ export class Correctiva extends Entity {
 
   @property({
     type: 'number',
-    required: true,
+    required: false,
     precision: 19,
     scale: 0,
     id: 1,

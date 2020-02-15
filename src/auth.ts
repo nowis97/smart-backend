@@ -20,7 +20,7 @@ import {
 import {UserProfile, securityId} from '@loopback/security';
 import {StrategyAdapter} from '@loopback/authentication-passport';
 import {AuthMetadataProvider} from '@loopback/authentication/dist/providers/auth-metadata.provider';
-import {UsersRepository, UsersRolesRepository} from './repositories';
+import {RolesRepository, UsersRepository, UsersRolesRepository} from './repositories';
 import {repository} from '@loopback/repository';
 import {Strategy as JwtStrategy, ExtractJwt} from 'passport-jwt';
 import {HttpErrors, Request} from '@loopback/rest';
@@ -84,7 +84,7 @@ export class MyAuthMetadataProvider extends AuthMetadataProvider {
 export const JWT_SECRET = 'changeme';
 
 // the required interface to filter login payload
-export interface Credentials {
+interface Credentials {
     username: string;
     password: string;
 }
@@ -100,6 +100,7 @@ export class MyAuthAuthenticationStrategyProvider implements Provider<Authentica
         @inject(AuthenticationBindings.METADATA) private metadata: MyAuthenticationMetadata,
         @repository(UsersRepository) private userRepository: UsersRepository,
         @repository(UsersRolesRepository) private userRoleRepository: UsersRolesRepository,
+        @repository(RolesRepository) private rolesRepository:RolesRepository
     ) {}
 
     value(): ValueOrPromise<AuthenticationStrategy | undefined> {
@@ -110,10 +111,8 @@ export class MyAuthAuthenticationStrategyProvider implements Provider<Authentica
             const jwtStrategy = new JwtStrategy(
                 {
                     secretOrKey: JWT_SECRET,
-                    jwtFromRequest: ExtractJwt.fromExtractors([
+                    jwtFromRequest:
                         ExtractJwt.fromAuthHeaderAsBearerToken(),
-                        ExtractJwt.fromUrlQueryParameter('access_token'),
-                    ]),
                 },
                 (payload, done) => this.verifyToken(payload, done),
             );
@@ -133,7 +132,7 @@ export class MyAuthAuthenticationStrategyProvider implements Provider<Authentica
     ) {
         try {
             const {username} = payload;
-            const user = await this.userRepository.findById(username);
+            const user = await this.userRepository.findOne({where:{nombre:username}});
             if (!user) done(null, false);
 
             await this.verifyRoles(username);
@@ -155,15 +154,25 @@ export class MyAuthAuthenticationStrategyProvider implements Provider<Authentica
 
         if (type === SecuredType.HAS_ANY_ROLE) {
             if (!roles.length) return;
+            const userid = (await this.userRepository.findOne({where: {nombre: username}}))?.id;
+            const rolesid = (await this.rolesRepository.find({where:{inq:roles}})).map(val => val.id);
+
+
             const {count} = await this.userRoleRepository.count({
-                userId: username,
-                roleId: {inq: roles},
+                userId: userid,
+                roleId: {inq: rolesid},
             });
 
             if (count) return;
         } else if (type === SecuredType.HAS_ROLES && roles.length) {
-            const userRoles = await this.userRoleRepository.find({where: {userId: username}});
-            const roleIds = userRoles.map(ur=> ur.roleId);
+            const userid = (await this.userRepository.findOne({where: {nombre: username}}))?.id;
+
+            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+            // @ts-ignore
+            const userRoles = await this.userRoleRepository.execute('select nombre from users_roles,roles where usersid = (?)',[userid]);
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const roleIds = userRoles.map((ur: { nombre: any; }) => ur.nombre);
             let valid = true;
             for (const role of roles)
                 if (!roleIds.includes(role)) {
@@ -198,7 +207,6 @@ export class MyAuthActionProvider implements Provider<AuthenticateFn> {
         if (!strategy) return;
 
         const user = await strategy.authenticate(request);
-        if (!user) return;
         if (!user) return;
 
         this.setCurrentUser(user);

@@ -19,3 +19,8 @@ export * from './trabajos.repository';
 export * from './users-roles.repository';
 export * from './users.repository';
 export * from './codigos-bajas.repository';
+export * from './despachos.repository';
+export * from './facturas.repository';
+export * from './performance.repository';
+export * from './maple.repository';
+export * from './tire.repository';

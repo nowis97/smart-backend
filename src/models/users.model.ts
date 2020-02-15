@@ -3,13 +3,14 @@ import {Entity, model, property} from '@loopback/repository';
 @model({settings: {idInjection: false, mssql: {schema: 'dbo', table: 'users'}}})
 export class Users extends Entity {
   @property({
-    type: 'string',
-    required: true,
-    length: 255,
+    type: 'number',
+    required: false,
+    precision: 10,
+    scale: 0,
     id: 1,
-    mssql: {columnName: 'id', dataType: 'varchar', dataLength: 255, dataPrecision: null, dataScale: null, nullable: 'NO'},
+    mssql: {columnName: 'id', dataType: 'int', dataLength: null, dataPrecision: 10, dataScale: 0, nullable: 'NO'},
   })
-  id: string;
+  id: number;
 
   @property({
     type: 'string',
@@ -26,6 +27,14 @@ export class Users extends Entity {
     mssql: {columnName: 'password', dataType: 'varchar', dataLength: 255, dataPrecision: null, dataScale: null, nullable: 'NO'},
   })
   password: string;
+
+  @property({
+    type: 'string',
+    required: true,
+    length: 255,
+    mssql: {columnName: 'nombre', dataType: 'varchar', dataLength: 255, dataPrecision: null, dataScale: null, nullable: 'NO'},
+  })
+  nombre: string;
 
   // Define well-known properties here
 

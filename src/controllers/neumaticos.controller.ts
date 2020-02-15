@@ -171,4 +171,6 @@ export class NeumaticosController {
   async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.neumaticosRepository.deleteById(id);
   }
+
+
 }

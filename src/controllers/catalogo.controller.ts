@@ -192,14 +192,15 @@ export class CatalogoController {
     }
 })
   async getMedida(@param.path.string('marca') marca: string):Promise<object>{
-    return this.catalogoRepository.find({
-      fields:
-        {size:true},
-      where:
-        {
-          manufacturer: marca
-        }
-    })
+    return this.catalogoRepository.execute("select distinct size from catalogo where manufacturer = (?)",[marca]);
+    // return this.catalogoRepository.find({
+    //   fields:
+    //     {size:true},
+    //   where:
+    //     {
+    //       manufacturer: marca
+    //     }
+    // })
 
   }
 
@@ -213,14 +214,17 @@ export class CatalogoController {
   async getModelo(@param.path.string('marca') marca: string,
                   @param.path.string('medida') medida:string){
 
-    return this.catalogoRepository.find({
-      fields:{
-        patternTreadDesign:true,
-      },
-      where:{
-        and:[{manufacturer:marca},{size:medida}]
-      }
-    })
+  return this.catalogoRepository.execute("select distinct 'patternTreadDesign'= pattern_tread_design from catalogo where manufacturer = (?) and size = (?)",[marca,medida]);
+
+
+  // return this.catalogoRepository.find({
+  //     fields:{
+  //       patternTreadDesign:true,
+  //     },
+  //     where:{
+  //       and:[{manufacturer:marca},{size:medida}]
+  //     }
+  //   })
 }
 
 @get('/catalogo/numero-catalogo/{marca}/{medida}/{modelo}/{compuesto}',{

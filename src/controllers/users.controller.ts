@@ -1,41 +1,42 @@
+import {Count, CountSchema, Filter, repository, Where} from '@loopback/repository';
 import {
-  Count,
-  CountSchema,
-  Filter,
-  repository,
-  Where,
-} from '@loopback/repository';
-import {
-  post,
-  param,
+  del,
   get,
   getFilterSchemaFor,
   getModelSchemaRef,
   getWhereSchemaFor,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
 } from '@loopback/rest';
 import {Users} from '../models';
-import {UsersRepository,UsersRolesRepository} from '../repositories';
+import {RolesRepository, UsersRepository, UsersRolesRepository} from '../repositories';
 import * as bcrypt from 'bcrypt';
-import {promisify} from "util";
-import {sign} from "jsonwebtoken";
-import {Credentials, JWT_SECRET} from '../auth';
+import {promisify} from 'util';
+import {sign} from 'jsonwebtoken';
+import {JWT_SECRET, secured, SecuredType} from '../auth';
+
 import {HttpErrors} from '@loopback/rest/dist';
+
 const signAsync = promisify(sign);
+
+interface Credentials {
+  username: string;
+  password: string;
+}
 
 export class UsersController {
   private SALT_ROUNDS = 8;
   constructor(
     @repository(UsersRepository)
     public usersRepository : UsersRepository,
-    @repository(UsersRolesRepository) private usersRolesRepository : UsersRolesRepository
-
+    @repository(UsersRolesRepository) private usersRolesRepository : UsersRolesRepository,
+    @repository(RolesRepository) private rolesRepository:RolesRepository
 
   ) {}
-
+  @secured(SecuredType.HAS_ROLES,['superuser'])
   @post('/users', {
     responses: {
       '200': {
@@ -50,7 +51,7 @@ export class UsersController {
         'application/json': {
           schema: getModelSchemaRef(Users, {
             title: 'NewUsers',
-            
+
           }),
         },
       },
@@ -65,7 +66,7 @@ export class UsersController {
 
     return this.usersRepository.create(users);
   }
-
+  @secured(SecuredType.HAS_ROLES,['superuser'])
   @get('/users/count', {
     responses: {
       '200': {
@@ -79,7 +80,7 @@ export class UsersController {
   ): Promise<Count> {
     return this.usersRepository.count(where);
   }
-
+  @secured(SecuredType.HAS_ROLES,['superuser'])
   @get('/users', {
     responses: {
       '200': {
@@ -100,7 +101,7 @@ export class UsersController {
   ): Promise<Users[]> {
     return this.usersRepository.find(filter);
   }
-
+  @secured(SecuredType.HAS_ROLES,['superuser'])
   @patch('/users', {
     responses: {
       '200': {
@@ -122,7 +123,7 @@ export class UsersController {
   ): Promise<Count> {
     return this.usersRepository.updateAll(users, where);
   }
-
+  @secured(SecuredType.HAS_ROLES,['superuser'])
   @get('/users/{id}', {
     responses: {
       '200': {
@@ -136,12 +137,12 @@ export class UsersController {
     },
   })
   async findById(
-    @param.path.string('id') id: string,
+    @param.path.number('id') id: number,
     @param.query.object('filter', getFilterSchemaFor(Users)) filter?: Filter<Users>
   ): Promise<Users> {
     return this.usersRepository.findById(id, filter);
   }
-
+  @secured(SecuredType.HAS_ROLES,['superuser'])
   @patch('/users/{id}', {
     responses: {
       '204': {
@@ -150,7 +151,7 @@ export class UsersController {
     },
   })
   async updateById(
-    @param.path.string('id') id: string,
+    @param.path.number('id') id: number,
     @requestBody({
       content: {
         'application/json': {
@@ -160,9 +161,11 @@ export class UsersController {
     })
     users: Users,
   ): Promise<void> {
+    users.password = await bcrypt.hash(users.password,this.SALT_ROUNDS);
+
     await this.usersRepository.updateById(id, users);
   }
-
+  @secured(SecuredType.HAS_ROLES,['superuser'])
   @put('/users/{id}', {
     responses: {
       '204': {
@@ -171,12 +174,12 @@ export class UsersController {
     },
   })
   async replaceById(
-    @param.path.string('id') id: string,
+    @param.path.number('id') id: number,
     @requestBody() users: Users,
   ): Promise<void> {
     await this.usersRepository.replaceById(id, users);
   }
-
+  @secured(SecuredType.HAS_ROLES,['superuser'])
   @del('/users/{id}', {
     responses: {
       '204': {
@@ -184,14 +187,16 @@ export class UsersController {
       },
     },
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
+  async deleteById(@param.path.number('id') id: number): Promise<void> {
     await this.usersRepository.deleteById(id);
   }
-
+  @secured(SecuredType.PERMIT_ALL)
   @post('/users/login')
   async login(@requestBody() credentials: Credentials) {
-    if (!credentials.username || !credentials.password) throw new HttpErrors.BadRequest('Missing Username or Password');
-    const user = await this.usersRepository.findOne({where: {id: credentials.username}});
+    if (!credentials.username || !credentials.password)
+      throw new HttpErrors.BadRequest('Missing Username or Password');
+
+    const user = await this.usersRepository.findOne({where: {nombre: credentials.username}});
 
     if (!user) throw new HttpErrors.Unauthorized('Invalid credentials');
 
@@ -201,14 +206,15 @@ export class UsersController {
 
     const tokenObject = {username: credentials.username};
     const token = await signAsync(tokenObject, JWT_SECRET);
-    const roles = await this.usersRolesRepository.find({where: {usersid: user.id}});
-    const {id} = user;
+    const roles = await this.usersRolesRepository
+      .execute('select \'nombre\'= roles.nombre from users,users_roles,roles where users_roles.rolesid = roles.id and users_roles.usersid = users.id and users.id =(?)',[user.id]);
+
 
     return {
       token,
-      id: id as string,
+      id: user.nombre,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      roles: roles.map((r: { rolesid: any; }) => r.rolesid),
+      roles: roles.map((r: { nombre: any; }) => r.nombre),
     };
   }
 }
