@@ -65,10 +65,6 @@ export class IngresoController {
     return this.ingresosRepository.create(ingresos);
 
 
-
-
-
-
   }
   @secured(SecuredType.HAS_ANY_ROLE,['superuser','ingreso'])
   @get('/ingresos/count', {

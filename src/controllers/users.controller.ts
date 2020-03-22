@@ -202,7 +202,7 @@ export class UsersController {
 
     const isPasswordMatched = await bcrypt.compare(credentials.password,user.password.toString());
     //const isPasswordMatched = user.password === credentials.password;
-    if (!isPasswordMatched) throw new HttpErrors.Unauthorized('Invalid credentials');
+    if (!isPasswordMatched) throw new HttpErrors.Unauthorized('Credenciales Invalidas');
 
     const tokenObject = {username: credentials.username};
     const token = await signAsync(tokenObject, JWT_SECRET);

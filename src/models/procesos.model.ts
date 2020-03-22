@@ -61,6 +61,15 @@ export class Procesos extends Entity {
   })
   id: number;
 
+  @property({
+    type: 'number',
+    required: true,
+    precision: 10,
+    scale: 0,
+    mssql: {columnName: 'hrs_garantia', dataType: 'int', dataLength: null, dataPrecision: 10, dataScale: 0, nullable: 'NO'},
+  })
+  hrsGarantia: number;
+
   // Define well-known properties here
 
   // Indexer property to allow additional data

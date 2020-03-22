@@ -79,22 +79,30 @@ export class TrabajosController {
   if (await this.trabajosRepository.exists(trabajo.planta.ordenTrabajo))
     throw new HttpErrors.Conflict('La orden de trabajo ya existe');
 
-   const recepcionado = await this.recepcionesRepository.findById(trabajo.planta.recepcionesid);
+   //const recepcionado = await this.recepcionesRepository.findById(trabajo.planta.recepcionesid);
 
-   if (new Date(trabajo.planta.fechaProduccion).getTime() < new Date(recepcionado.fecha).getTime() )
-     throw new HttpErrors.BadRequest('La fecha de producción debe ser mayor que la de recepción');
+   //if (new Date(trabajo.planta.fechaProduccion).getTime() >= new Date(recepcionado.fecha).getTime() )
+    // throw new HttpErrors.BadRequest('La fecha de producción debe ser mayor que la de recepción');
 
+    const hrsGarantia = trabajo.planta.hrsGarantia || 0;
     if (Object.keys(trabajo).length ===1){
       delete trabajo.planta.garantia;
       await this.neumaticosRepository.updateById(trabajo.planta.serie,{estadoActual:'BAJA'});
       delete trabajo.planta.serie;
+      delete trabajo.planta.hrsGarantia;
       return this.trabajosRepository.create(trabajo.planta);
     }
     const garantia = trabajo.planta.garantia;
     const serie = trabajo.planta.serie;
     delete trabajo.planta.garantia;
     delete trabajo.planta.serie;
-    await this.trabajosRepository.create(trabajo.planta);
+    await this.trabajosRepository.create({
+      plantaid:trabajo.planta.plantaid,
+      fechaProduccion:trabajo.planta.fechaProduccion,
+      ordenTrabajo:trabajo.planta.ordenTrabajo,
+      condicionFinalid:trabajo.planta.condicionFinalid,
+      recepcionesid:trabajo.planta.recepcionesid
+    });
 
     if (trabajo.renovados){
 
@@ -113,7 +121,7 @@ export class TrabajosController {
      const newRenovado = await this.renovadoRepository.create(trabajo.renovados);
 
      await this.neumaticosRepository.updateById(serie,{estadoActual:'TERMINADO'});
-     return this.procesosRepository.create(new Procesos({'garantia':garantia,'trabajosordenTrabajo':trabajo.planta.ordenTrabajo,'renovadoid':newRenovado.id}));
+     return this.procesosRepository.create(new Procesos({'garantia':garantia,'trabajosordenTrabajo':trabajo.planta.ordenTrabajo,'renovadoid':newRenovado.id,'hrsGarantia':hrsGarantia}));
 
     }else{
       let preventiva =null;
@@ -139,7 +147,8 @@ export class TrabajosController {
           'kalUltraid':kalUltra? kalUltra.id:null,
           'correctivaid':correctiva ? correctiva.id:null,
           'preventivaid':preventiva ? preventiva.id:null,
-          'trabajosordenTrabajo':trabajo.planta.ordenTrabajo
+          'trabajosordenTrabajo':trabajo.planta.ordenTrabajo,
+          'hrsGarantia': hrsGarantia
         })
       )
 
@@ -152,7 +161,6 @@ export class TrabajosController {
 
   }
   @secured(SecuredType.HAS_ANY_ROLE,['superuser','planta','despacho'])
-
   @get('/trabajados',{
     responses:{
       200:{

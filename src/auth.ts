@@ -134,7 +134,6 @@ export class MyAuthAuthenticationStrategyProvider implements Provider<Authentica
             const {username} = payload;
             const user = await this.userRepository.findOne({where:{nombre:username}});
             if (!user) done(null, false);
-
             await this.verifyRoles(username);
 
             // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
