@@ -8,8 +8,8 @@ import {
 } from '@loopback/rest';
 
 import * as cp from 'child_process'
-
 import fs from 'fs';
+import path from 'path';
 import {repository} from '@loopback/repository';
 import {ClientesRepository, FacturasRepository} from '../repositories';
 import {secured, SecuredType} from '../auth';
@@ -37,27 +37,47 @@ export class ReportesController {
                      @param.query.dateTime('fechaTermino', {required: true}) fechaTermino: Date,
                      @param.query.string('faena', {required: true}) faena: string) {
 
-    const pathFolder = '/home/nowis/Documents/SMART/smart-cl/assets/';
 
-    const pathTemplate = pathFolder + 'ReporteMapleTemplate.xlsx';
-    const pathReport = pathFolder + 'ReporteMaple.xlsx';
+    const FILENAME_TEMPLATE = 'ReporteMapleTemplate.xlsx';
+    const FILENAME_REPORT = 'ReporteMaple.xlsx';
+    const FILENAME_EXCEL = 'SMART_Excel';
 
-    const nombreCliente = (await this.clienteRepository.findById(parseInt(faena))).faena;
+    const pathReport =  path.resolve('assets/'+FILENAME_REPORT);
+    const pathSmartExcel =path.resolve('src/SMART_EXCEL_EXPORT/'+FILENAME_EXCEL);
 
-    const reporteRows = await this.facturasRepository.execute("select neumaticos.serie, catalogo.manufacturer,trabajos.orden_trabajo,trabajos.fecha_produccion,facturas.numero_factura,facturas.fecha,maple.cod_producto,\n" +
-      "       maple.nombre_producto,renovado.peso_carcasa,maple.ahorro_emisiones_co2,maple.ahorro_co2,maple.ahorro_diesel\n" +
-      "from neumaticos,catalogo,trabajos,facturas,despachos,procesos,ingresos,recepciones,maple,renovado\n" +
-      "where facturas.despachosguia_despacho = despachos.guia_despacho and despachos.procesosid = procesos.id\n" +
-      "  and procesos.trabajosorden_trabajo = trabajos.orden_trabajo and trabajos.recepcionesid = recepciones.id and\n" +
-      "      recepciones.ingresosid = ingresos.id and recepciones.ingresosid = ingresos.id and ingresos.neumaticosserie = neumaticos.serie and\n" +
-      "      neumaticos.catalogocatalogue_number = catalogo.catalogue_number and neumaticos.serie = maple.serie and procesos.renovadoid = renovado.id\n" +
-      "        and ingresos.clientesid = (?) and facturas.fecha between (?) and (?) ", [faena, fechaInicio, fechaTermino]);
+    const pathTemplate = path.resolve('assets/'+FILENAME_TEMPLATE);
 
+    let nombreCliente ='Todos';
+    let reporteRows;
+
+    if (faena !=='0') {
+      nombreCliente = (await this.clienteRepository.findById(parseInt(faena))).faena;
+
+      reporteRows = await this.facturasRepository.execute("select neumaticos.serie, catalogo.manufacturer,trabajos.orden_trabajo,trabajos.fecha_produccion,facturas.numero_factura,facturas.fecha,maple.cod_producto,\n" +
+        "       maple.nombre_producto,renovado.peso_carcasa,maple.ahorro_emisiones_co2,maple.ahorro_co2,maple.ahorro_diesel\n" +
+        "from neumaticos,catalogo,trabajos,facturas,despachos,procesos,ingresos,recepciones,maple,renovado\n" +
+        "where facturas.despachosguia_despacho = despachos.guia_despacho and despachos.procesosid = procesos.id\n" +
+        "  and procesos.trabajosorden_trabajo = trabajos.orden_trabajo and trabajos.recepcionesid = recepciones.id and\n" +
+        "      recepciones.ingresosid = ingresos.id and recepciones.ingresosid = ingresos.id and ingresos.neumaticosserie = neumaticos.serie and\n" +
+        "      neumaticos.catalogocatalogue_number = catalogo.catalogue_number and neumaticos.serie = maple.serie and procesos.renovadoid = renovado.id\n" +
+        "        and ingresos.clientesid = (?) and facturas.fecha between (?) and (?) ", [faena, fechaInicio, fechaTermino]);
+
+    }else {
+
+      reporteRows = await this.facturasRepository.execute("select neumaticos.serie, catalogo.manufacturer,trabajos.orden_trabajo,trabajos.fecha_produccion,facturas.numero_factura,facturas.fecha,maple.cod_producto,\n" +
+        "       maple.nombre_producto,renovado.peso_carcasa,maple.ahorro_emisiones_co2,maple.ahorro_co2,maple.ahorro_diesel\n" +
+        "from neumaticos,catalogo,trabajos,facturas,despachos,procesos,ingresos,recepciones,maple,renovado\n" +
+        "where facturas.despachosguia_despacho = despachos.guia_despacho and despachos.procesosid = procesos.id\n" +
+        "  and procesos.trabajosorden_trabajo = trabajos.orden_trabajo and trabajos.recepcionesid = recepciones.id and\n" +
+        "      recepciones.ingresosid = ingresos.id and recepciones.ingresosid = ingresos.id and ingresos.neumaticosserie = neumaticos.serie and\n" +
+        "      neumaticos.catalogocatalogue_number = catalogo.catalogue_number and neumaticos.serie = maple.serie and procesos.renovadoid = renovado.id\n" +
+        "      and facturas.fecha between (?) and (?) ", [fechaInicio, fechaTermino]);
+    }
 
     if (fs.existsSync(pathReport))
       fs.unlinkSync(pathReport);
 
-    const res = cp.spawnSync('/home/nowis/Documents/SMART/SMART_Excel/bin/Debug/netcoreapp3.1/SMART_Excel', [
+    const res = cp.spawnSync(pathSmartExcel, [
       pathTemplate.toString(),
       pathReport.toString(),
       nombreCliente,
@@ -67,7 +87,7 @@ export class ReportesController {
     ]);
 
 
-    const stream = fs.readFileSync('/home/nowis/Documents/SMART/smart-cl/assets/ReporteMaple.xlsx');
+    const stream = fs.readFileSync(pathReport);
 
 
     console.log(res.stdout.toString());
@@ -92,9 +112,9 @@ export class ReportesController {
   async maple(@param.query.dateTime('fechaInicio', {required: true}) fechaInicio: Date,
               @param.query.dateTime('fechaTermino', {required: true}) fechaTermino: Date,
               @param.query.number('faena', {required: true}) faena: number) {
-
-    if (faena === 0)
-      return this.facturasRepository.execute("select 'Serie'= neumaticos.serie, 'Marca'= catalogo.manufacturer, '#Orden Trabajo' = trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd')," +
+  let res = null;
+    if (faena === 0) {
+      res = await this.facturasRepository.execute("select 'Serie'= neumaticos.serie, 'Marca'= catalogo.manufacturer, '#Orden Trabajo' = trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd')," +
         " '#Factura'= facturas.numero_factura,'Fecha Factura'= FORMAT(facturas.fecha,'yyyy-MM-dd'),'Cod Producto' = maple.cod_producto,\n" +
         "      'Nombre Producto' = maple.nombre_producto ,'Peso Carcasa' =renovado.peso_carcasa,'Ahorro Emisiones CO2 (%)'= FORMAT( maple.ahorro_emisiones_co2,'P'), 'Ahorro Emisiones (Kgs)' = maple.ahorro_co2, 'Litros Diesel' = maple.ahorro_diesel\n" +
         "from neumaticos,catalogo,trabajos,facturas,despachos,procesos,ingresos,recepciones,maple,renovado\n" +
@@ -102,17 +122,20 @@ export class ReportesController {
         "  and procesos.trabajosorden_trabajo = trabajos.orden_trabajo and trabajos.recepcionesid = recepciones.id and\n" +
         "      recepciones.ingresosid = ingresos.id and recepciones.ingresosid = ingresos.id and ingresos.neumaticosserie = neumaticos.serie and\n" +
         "      neumaticos.catalogocatalogue_number = catalogo.catalogue_number and neumaticos.serie = maple.serie and procesos.renovadoid = renovado.id\n" +
-        "         and facturas.fecha between (?) and (?) ", [ fechaInicio, fechaTermino]);
+        "         and facturas.fecha between (?) and (?) ", [fechaInicio,fechaTermino]);
+    }else {
+      res = await this.facturasRepository.execute("select 'Serie'= neumaticos.serie, 'Marca'= catalogo.manufacturer, '#Orden Trabajo' = trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd')," +
+        " '#Factura'= facturas.numero_factura,'Fecha Factura'= FORMAT(facturas.fecha,'yyyy-MM-dd'),'Cod Producto' = maple.cod_producto,\n" +
+        "      'Nombre Producto' = maple.nombre_producto ,'Peso Carcasa' =renovado.peso_carcasa,'Ahorro Emisiones CO2 (%)'= FORMAT( maple.ahorro_emisiones_co2,'P'), 'Ahorro Emisiones (Kgs)' = maple.ahorro_co2, 'Litros Diesel' = maple.ahorro_diesel\n" +
+        "from neumaticos,catalogo,trabajos,facturas,despachos,procesos,ingresos,recepciones,maple,renovado\n" +
+        "where facturas.despachosguia_despacho = despachos.guia_despacho and despachos.procesosid = procesos.id\n" +
+        "  and procesos.trabajosorden_trabajo = trabajos.orden_trabajo and trabajos.recepcionesid = recepciones.id and\n" +
+        "      recepciones.ingresosid = ingresos.id and recepciones.ingresosid = ingresos.id and ingresos.neumaticosserie = neumaticos.serie and\n" +
+        "      neumaticos.catalogocatalogue_number = catalogo.catalogue_number and neumaticos.serie = maple.serie and procesos.renovadoid = renovado.id\n" +
+        "        and ingresos.clientesid = (?) and facturas.fecha between (?) and (?) ", [faena, fechaInicio, fechaTermino]);
+    }
 
-    return this.facturasRepository.execute("select 'Serie'= neumaticos.serie, 'Marca'= catalogo.manufacturer, '#Orden Trabajo' = trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd')," +
-      " '#Factura'= facturas.numero_factura,'Fecha Factura'= FORMAT(facturas.fecha,'yyyy-MM-dd'),'Cod Producto' = maple.cod_producto,\n" +
-      "      'Nombre Producto' = maple.nombre_producto ,'Peso Carcasa' =renovado.peso_carcasa,'Ahorro Emisiones CO2 (%)'= FORMAT( maple.ahorro_emisiones_co2,'P'), 'Ahorro Emisiones (Kgs)' = maple.ahorro_co2, 'Litros Diesel' = maple.ahorro_diesel\n" +
-      "from neumaticos,catalogo,trabajos,facturas,despachos,procesos,ingresos,recepciones,maple,renovado\n" +
-      "where facturas.despachosguia_despacho = despachos.guia_despacho and despachos.procesosid = procesos.id\n" +
-      "  and procesos.trabajosorden_trabajo = trabajos.orden_trabajo and trabajos.recepcionesid = recepciones.id and\n" +
-      "      recepciones.ingresosid = ingresos.id and recepciones.ingresosid = ingresos.id and ingresos.neumaticosserie = neumaticos.serie and\n" +
-      "      neumaticos.catalogocatalogue_number = catalogo.catalogue_number and neumaticos.serie = maple.serie and procesos.renovadoid = renovado.id\n" +
-      "        and ingresos.clientesid = (?) and facturas.fecha between (?) and (?) ", [faena, fechaInicio, fechaTermino]);
+    return res;
   }
 
   @secured(SecuredType.HAS_ANY_ROLE,['superuser','reportes'])
