@@ -77,7 +77,7 @@ export class ReportesController {
     if (fs.existsSync(pathReport))
       fs.unlinkSync(pathReport);
 
-    const res = cp.spawnSync(pathSmartExcel, [
+     cp.spawnSync(pathSmartExcel, [
       pathTemplate.toString(),
       pathReport.toString(),
       nombreCliente,
@@ -89,8 +89,6 @@ export class ReportesController {
 
     const stream = fs.readFileSync(pathReport);
 
-
-    console.log(res.stdout.toString());
 
     this.response.status(200)
       .contentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -113,16 +111,18 @@ export class ReportesController {
               @param.query.dateTime('fechaTermino', {required: true}) fechaTermino: Date,
               @param.query.number('faena', {required: true}) faena: number) {
   let res = null;
-    if (faena === 0) {
-      res = await this.facturasRepository.execute("select 'Serie'= neumaticos.serie, 'Marca'= catalogo.manufacturer, '#Orden Trabajo' = trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd')," +
+
+
+  if (faena === 0) {
+      res = await this.facturasRepository.execute("select 'Serie'= neumaticos.serie, 'Cliente'=clientes.faena, 'Marca'= catalogo.manufacturer, '#Orden Trabajo' = trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd')," +
         " '#Factura'= facturas.numero_factura,'Fecha Factura'= FORMAT(facturas.fecha,'yyyy-MM-dd'),'Cod Producto' = maple.cod_producto,\n" +
         "      'Nombre Producto' = maple.nombre_producto ,'Peso Carcasa' =renovado.peso_carcasa,'Ahorro Emisiones CO2 (%)'= FORMAT( maple.ahorro_emisiones_co2,'P'), 'Ahorro Emisiones (Kgs)' = maple.ahorro_co2, 'Litros Diesel' = maple.ahorro_diesel\n" +
-        "from neumaticos,catalogo,trabajos,facturas,despachos,procesos,ingresos,recepciones,maple,renovado\n" +
+        "from neumaticos,catalogo,trabajos,facturas,despachos,procesos,ingresos,recepciones,maple,renovado,clientes\n" +
         "where facturas.despachosguia_despacho = despachos.guia_despacho and despachos.procesosid = procesos.id\n" +
         "  and procesos.trabajosorden_trabajo = trabajos.orden_trabajo and trabajos.recepcionesid = recepciones.id and\n" +
         "      recepciones.ingresosid = ingresos.id and recepciones.ingresosid = ingresos.id and ingresos.neumaticosserie = neumaticos.serie and\n" +
         "      neumaticos.catalogocatalogue_number = catalogo.catalogue_number and neumaticos.serie = maple.serie and procesos.renovadoid = renovado.id\n" +
-        "         and facturas.fecha between (?) and (?) ", [fechaInicio,fechaTermino]);
+        "       and clientes.id = ingresos.clientesid  and facturas.fecha between (?) and (?) ", [fechaInicio,fechaTermino]);
     }else {
       res = await this.facturasRepository.execute("select 'Serie'= neumaticos.serie, 'Marca'= catalogo.manufacturer, '#Orden Trabajo' = trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd')," +
         " '#Factura'= facturas.numero_factura,'Fecha Factura'= FORMAT(facturas.fecha,'yyyy-MM-dd'),'Cod Producto' = maple.cod_producto,\n" +
@@ -358,12 +358,12 @@ export class ReportesController {
                    @param.query.number('faena',{required:true}) faena: number) {
 
     if (faena === 0)
-    return this.facturasRepository.execute("select 'Serie' = ingresos.neumaticosserie, 'Orden Trabajo'= trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd'),'#Factura' = facturas.numero_factura, 'Fecha Facturacion'= FORMAT(facturas.fecha,'yyyy-MM-dd'),'Fecha Estado Pago' = FORMAT(facturas.estado_pago,'yyyy-MM-dd')," +
+    return this.facturasRepository.execute("select 'Serie' = ingresos.neumaticosserie, 'Cliente'= clientes.faena, 'Orden Trabajo'= trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd'),'#Factura' = facturas.numero_factura, 'Fecha Facturacion'= FORMAT(facturas.fecha,'yyyy-MM-dd'),'Fecha Estado Pago' = FORMAT(facturas.estado_pago,'yyyy-MM-dd')," +
       " 'Guia Despacho'= facturas.despachosguia_despacho, 'Fecha Despacho'= FORMAT(despachos.fecha,'yyyy-MM-dd') from facturas,despachos,procesos,trabajos,recepciones,ingresos,clientes\n" +
       "where facturas.despachosguia_despacho = despachos.guia_despacho and despachos.procesosid = procesos.id and  procesos.trabajosorden_trabajo = trabajos.orden_trabajo and\n" +
-      "      trabajos.recepcionesid = recepciones.id and recepciones.ingresosid = ingresos.id and facturas.fecha between (?) and (?) ",[fechaInicio,fechaTermino])
+      "      trabajos.recepcionesid = recepciones.id and recepciones.ingresosid = ingresos.id and ingresos.clientesid = clientes.id and facturas.fecha between (?) and (?) ",[fechaInicio,fechaTermino])
 
-  return this.facturasRepository.execute("select 'Serie' = ingresos.neumaticosserie, 'Orden Trabajo'= trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd'),'#Factura' = facturas.numero_factura, 'Fecha Facturacion'= FORMAT(facturas.fecha,'yyyy-MM-dd'),'Fecha Estado Pago' = FORMAT(facturas.estado_pago,'yyyy-MM-dd')," +
+  return this.facturasRepository.execute("select 'Serie' = ingresos.neumaticosserie, 'Cliente' = clientes.faena, 'Orden Trabajo'= trabajos.orden_trabajo, 'Fecha Produccion'= FORMAT(trabajos.fecha_produccion,'yyyy-MM-dd'),'#Factura' = facturas.numero_factura, 'Fecha Facturacion'= FORMAT(facturas.fecha,'yyyy-MM-dd'),'Fecha Estado Pago' = FORMAT(facturas.estado_pago,'yyyy-MM-dd')," +
     " 'Guia Despacho'= facturas.despachosguia_despacho, 'Fecha Despacho'= FORMAT(despachos.fecha,'yyyy-MM-dd') from facturas,despachos,procesos,trabajos,recepciones,ingresos,clientes\n" +
     "where facturas.despachosguia_despacho = despachos.guia_despacho and despachos.procesosid = procesos.id and  procesos.trabajosorden_trabajo = trabajos.orden_trabajo and\n" +
     "      trabajos.recepcionesid = recepciones.id and recepciones.ingresosid = ingresos.id and facturas.fecha between (?) and (?) and clientes.id = (?)",[fechaInicio,fechaTermino,faena])
