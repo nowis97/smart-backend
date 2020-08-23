@@ -5,6 +5,12 @@ import {MultipartFormDataBodyParser} from './utils/MultipartFormDataBodyParser';
 export {Smart};
 
 export async function main(options: ApplicationConfig = {}) {
+  options = {rest:{
+    port:3001,
+    apiExplorer:{
+      disabled:true
+    }
+    }}
   const app = new Smart(options);
   await app.boot();
   await app.start();

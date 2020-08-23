@@ -1,9 +1,6 @@
 import {BootMixin} from '@loopback/boot';
 import {ApplicationConfig} from '@loopback/core';
-import {
-  RestExplorerBindings,
-  RestExplorerComponent,
-} from '@loopback/rest-explorer';
+
 import {RepositoryMixin} from '@loopback/repository';
 import {RestApplication, RestBindings} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
@@ -21,7 +18,7 @@ export class Smart extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
 ) {
   constructor(options: ApplicationConfig = {}) {
-    options.rest.port = 3001;
+
     super(options);
 
     // Set up the custom sequence
@@ -30,10 +27,13 @@ export class Smart extends BootMixin(
     this.static('/', path.join(__dirname, '../public'));
     this.static('/images',path.join(__dirname,'../uploads'));
     // Customize @loopback/rest-explorer configuration here
+    /*
     this.bind(RestExplorerBindings.CONFIG).to({
       path: '/explorer',
     });
-    this.component(RestExplorerComponent);
+     */
+
+    //this.component(RestExplorerComponent);
     this.bind(RestBindings.ERROR_WRITER_OPTIONS).to({debug: true});
     this.bind(AuthenticationBindings.METADATA).toProvider(MyAuthMetadataProvider);
     this.bind(MyAuthBindings.STRATEGY).toProvider(MyAuthAuthenticationStrategyProvider);
