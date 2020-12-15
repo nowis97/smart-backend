@@ -59,6 +59,9 @@ export class IngresoController {
     ));
 
     }else {
+      if (neumaticoExiste.estadoActual === 'BAJA')
+        throw new HttpErrors.Conflict('El neumatico no puede ser ingresado de nuevo');
+
       if (neumaticoExiste.estadoActual !== 'FACTURADO' && neumaticoExiste.estadoActual === 'INGRESADO')
         throw new HttpErrors.Conflict('El neumatico ya esta en el proceso')
     }

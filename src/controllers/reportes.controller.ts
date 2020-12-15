@@ -77,7 +77,7 @@ export class ReportesController {
     if (fs.existsSync(pathReport))
       fs.unlinkSync(pathReport);
 
-     cp.spawnSync(pathSmartExcel, [
+    const res = cp.spawnSync(pathSmartExcel, [
       pathTemplate.toString(),
       pathReport.toString(),
       nombreCliente,
@@ -86,6 +86,8 @@ export class ReportesController {
       JSON.stringify(reporteRows)
     ]);
 
+    console.log(res.stdout.toString());
+    console.log(res.stderr.toString());
 
     const stream = fs.readFileSync(pathReport);
 
